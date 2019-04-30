@@ -1,0 +1,71 @@
+create table hospede(
+	cod_hospede serial primary key,
+	nome varchar(50),
+	dt_nasc date
+);
+
+create table funcionario(
+	cod_funcionario serial primary key,
+	nome varchar(50),
+	dt_nasc date
+	
+);
+
+create table categoria(
+	cod_categoria serial primary key,
+	nome varchar(50),
+	descricao varchar(50),
+	valor_dia float 
+);
+
+create table apto(
+	numero serial primary key,
+	status varchar(50),
+	localizacao varchar(50),
+	cod_categoria int,
+	foreign key (cod_categoria) references categoria(cod_categoria)
+);
+
+create table hospedagem(
+	cod_hospedagem serial primary key,
+	dt_entrada date,
+	dt_prev_saida date,
+	dt_saida date,
+	cod_hospede int,
+	cod_funcionario int,
+	numero int,
+	foreign key (cod_hospede) references hospede(cod_hospede),
+	foreign key (cod_funcionario) references funcionario(cod_funcionario),
+	foreign key (numero) references apto(numero)
+);
+
+create table reserva(
+	cod_reserva serial primary key,
+	dt_prev_entrada date,
+	cod_hospede int,
+	cod_funcionario int,
+	numero int,
+	foreign key (cod_hospede) references hospede(cod_hospede),
+	foreign key (cod_funcionario) references funcionario(cod_funcionario),
+	foreign key (numero) references apto(numero)
+);
+
+
+insert into hospede values(1,'Pedro','1995-12-02')
+insert into hospede values(2,'Maria','1990-06-30')
+insert into hospede values(3,'Mario','2001-01-11')
+
+insert into funcionario values(1,'Pedro','1995-12-02')
+insert into funcionario values(2,'Francisca','1988-10-16')
+insert into funcionario values(3,'Jose','2000-08-25')
+
+insert into categoria values()
+
+insert into apto values()
+
+insert into hospedagem values()
+
+insert into reserva values()
+
+
+select * from hospede
