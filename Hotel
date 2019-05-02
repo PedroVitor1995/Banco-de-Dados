@@ -58,14 +58,21 @@ insert into hospede values(3,'Mario','2001-01-11')
 insert into funcionario values(1,'Pedro','1995-12-02')
 insert into funcionario values(2,'Francisca','1988-10-16')
 insert into funcionario values(3,'Jose','2000-08-25')
+	
+insert into categoria values(1,'Luxo','',250)
+insert into categoria values(2,'Simples','',150)
+insert into categoria values(3,'Super-Luxo','',300)
+	
+insert into apto values(1,'Ocupado','1° andar',2)
+insert into apto values(2,'Desocupado','2° andar',2)
+insert into apto values(3,'Ocupado','2° andar',1)
 
-insert into categoria values()
+insert into hospedagem values(1,'2019-05-01','2019-05-04','2019-05-03',1,2,3)
+insert into hospedagem values(2,'2019-05-01','2019-05-04','2019-05-03',1,2,3)
+insert into hospedagem values(3,'2019-05-01','2019-05-04','2019-05-03',1,2,3)
 
-insert into apto values()
+insert into reserva values(1,'2019-05-03',2,1,1)
+insert into reserva values(2,'2019-05-03',2,1,1)
+insert into reserva values(3,'2019-05-03',2,1,1)
 
-insert into hospedagem values()
-
-insert into reserva values()
-
-
-select * from hospede
+select * from apto
