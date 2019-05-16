@@ -64,10 +64,15 @@ insert into hospede values(9,'Carlos','1968-11-21')
 insert into hospede values(10,'Antonio','1957-01-19')
 insert into hospede values(11,'Jose','1960-02-27')
 insert into hospede values(12,'João','1965-08-09')
+-- Foi adicionado o campo nacionalidade na tabela
+insert into hospede values(13,'Roberto','1990-06-30','Portugues')
+insert into hospede values(14,'Rogerio','1905-11-23','Brasileiro')
+insert into hospede values(15,'Paola','1990-06-30','Espanhol')
 
 insert into funcionario values(1,'Pedro','1995-12-02')
 insert into funcionario values(2,'Francisca','1988-10-16')
 insert into funcionario values(3,'Jose','2000-08-25')
+-- Foi adicionado o campo salario na tabela
 insert into funcionario values(4,'Joaquim','1990-04-12',1500.00)
 insert into funcionario values(5,'Tiago','1970-08-28',3000.00)
 insert into funcionario values(6,'Ana','2001-10-05',1800.00)
@@ -94,7 +99,7 @@ insert into apto values(304,'Ocupado','3° andar',3)
 insert into apto values(305,'Ocupado','3° andar',6)
 
 insert into hospedagem values(1,'2019-05-01','2019-05-06','2019-05-06',1,2,101)
-insert into hospedagem values(2,'20197-04-29','2019-05-03','2019-05-03',2,3,304)
+insert into hospedagem values(2,'2019-04-29','2019-05-03','2019-05-03',2,3,304)
 insert into hospedagem values(3,'2019-05-02','2019-05-09','2019-05-09',5,2,202)
 insert into hospedagem values(4,'2019-04-22','2019-04-28','2019-04-28',6,1,104)
 insert into hospedagem values(5,'2019-05-09','2019-05-16','2019-05-16',7,1,302)
@@ -108,9 +113,9 @@ insert into hospedagem values(12,'2018-12-02','2018-12-12','2018-12-12',11,3,201
 insert into hospedagem values(13,'2017-12-02','2017-12-12','2017-12-12',1,2,201)
 insert into hospedagem values(14,'2019-05-03','2019-05-09','2019-05-09',12,1,204)
 insert into hospedagem values(15,'2019-05-06','2019-05-012','2019-05-12',1,3,101)
-insert into hospedagem values(16,'2011-07-18','2011-07-23','2011-07-23',1,4,302)
-insert into hospedagem values(17,'2009-10-27','2009-11-05','2009-11-05',1,5,103)
-insert into hospedagem values(18,'2004-12-02','2004-08-02','2004-08-02',1,1,202)
+insert into hospedagem values(16,'2011-07-10','2011-07-23','2011-07-23',1,4,302)
+insert into hospedagem values(17,'2009-11-01','2009-11-05','2009-11-05',1,5,103)
+insert into hospedagem values(18,'2009-10-27','2009-11-08','2009-11-08',1,1,202)
 insert into hospedagem values(19,'2016-02-11','2016-02-15','2016-02-15',1,6,301)
 insert into hospedagem values(20,'2018-09-21','2018-09-30','2018-09-30',1,6,102)
 insert into hospedagem values(21,'2014-04-17','2014-04-25','2014-04-25',1,5,303)
@@ -118,9 +123,8 @@ insert into hospedagem values(22,'2002-11-05','2002-11-15','2002-11-15',1,5,203)
 insert into hospedagem values(23,'2008-09-09','2008-09-17','2008-09-17',1,4,305)
 insert into hospedagem values(24,'2018-12-23','2019-01-02','2019-01-02',1,3,104)
 insert into hospedagem values(25,'2019-04-27','2019-05-05','2019-05-05',1,1,204)
+insert into hospedagem values(26,'2018-05-04','2018-05-17','2018-05-17',12,4,301)
 
-
-select * from hospedagem where cod_hospede=1 order by numero asc
 insert into reserva values(1,'2019-05-03','2019-05-09',3,1,102)
 insert into reserva values(2,'2019-05-04','2019-05-11',4,3,201)
 insert into reserva values(3,'2019-05-07','2019-05-12',5,2,103)
@@ -131,10 +135,11 @@ insert into reserva values(7,'2018-12-02','2018-12-12',1,3,204)
 insert into reserva values(8,'2019-04-22','2019-04-28',4,1,304)
 insert into reserva values(9,'2018-12-02','2018-12-12',12,1,104)
 insert into reserva values(10,'2016-04-22','2016-04-28',6,2,104)
+insert into reserva values(11,'2018-12-02','2018-12-18',2,4,201)
 
 
-
-							-- LISTAR DE EXERCICIO 1 --
+				
+				-- LISTAR DE EXERCICIO 1 --
 					
 -- 1. Nomes das categorias que possuam valores de diárias entre R$ 100,00 e R$ 200,00.
 	select nome from categoria where valor_dia>=100  and valor_dia<=200
@@ -223,7 +228,8 @@ insert into reserva values(10,'2016-04-22','2016-04-28',6,2,104)
 	update categoria set valor_dia=valor_dia + valor_dia*0.10 where cod_categoria=4
 	update categoria set valor_dia=valor_dia + valor_dia*0.10 where cod_categoria=5
 	
--- 23. O nome das categorias que não possuem apartamentos. 
+-- 23. O nome das categorias que não possuem 
+apartamentos. 
 	select nome from categoria where cod_categoria not in
 	(select cod_categoria from categoria natural join apto)
 	
@@ -237,7 +243,7 @@ insert into reserva values(10,'2016-04-22','2016-04-28',6,2,104)
 	where hospede.nome='João' and valor_dia in
 	(select max(valor_dia) from hospede natural join hospedagem 
 	natural join apto inner join categoria on (apto.cod_categoria=categoria.cod_categoria)
-	where hospede.nome='João')
+	where hospede.nome='João') limit 1
 
 -- 26. O nome dos hóspedes que nunca se hospedaram no apartamento 201.
 	select distinct nome from hospede natural join hospedagem natural join apto
@@ -293,50 +299,63 @@ insert into reserva values(10,'2016-04-22','2016-04-28',6,2,104)
 							
 							
 							
-							-- LISTAR DE EXERCICIO 2 --
+				-- LISTAR DE EXERCICIO 2 --
 					
--- 1. Listagem dos hóspedes contendo nome e data de nascimento, ordenada em ordem crescente por nome e decrescente por data de nascimento. 
+-- 1. Listagem dos hóspedes contendo nome e data de nascimento, ordenada em ordem crescente 
+-- por nome e decrescente por data de nascimento. 
 	select nome,dt_nasc from hospede order by nome asc,dt_nasc desc
 
--- 2. Listagem contendo os nomes das categorias, ordenados alfabeticamente. A coluna de nomes deve ter a palavra ‘Categoria’ como título. 
+-- 2. Listagem contendo os nomes das categorias, ordenados alfabeticamente. A coluna de nomes 
+-- deve ter a palavra ‘Categoria’ como título. 
 	select nome as Categoria from categoria order by nome asc
 
 -- 3. Listagem contendo os valores de diárias e os números dos apartamentos, ordenada em ordem decrescente de valor. 
 	select valor_dia,numero from categoria natural join apto order by valor_dia desc
 	
 -- 4. Categorias que possuem apenas um apartamento. 
-	select nome from categoria where cod_categoria in
-	(select cod_categoria from categoria natural join apto 
-	 group by cod_categoria having count(numero)=1)
-	 
-	 -- OUTRA MANEIRA DE FAZER
 	 select nome from categoria natural join apto 
 	 group by nome having count(numero)=1
+	 
+	 -- OUTRA MANEIRA DE FAZER
+	 select nome from categoria where cod_categoria in
+	(select cod_categoria from categoria natural join apto 
+	 group by cod_categoria having count(numero)=1)
 	
--- 5. Listagem dos nomes dos hóspedes brasileiros com mês e ano de nascimento, por ordem decrescente de idade e por ordem crescente de nome do hóspede.  	
+-- 5. Listagem dos nomes dos hóspedes brasileiros com mês e ano de nascimento, por ordem decrescente de 
+-- idade e por ordem crescente de nome do hóspede.  	
 	select nome,extract(month from dt_nasc) as mes,extract(year from dt_nasc) as ano from hospede
 	order by nome asc
 
--- 6. Listagem com 3 colunas, nome do hóspede, número do apartamento e quantidade (número de vezes que aquele hóspede se hospedou naquele apartamento), em ordem decrescente de quantidade. 
+-- 6. Listagem com 3 colunas, nome do hóspede, número do apartamento e quantidade (número de vezes que 
+-- aquele hóspede se hospedou naquele apartamento), em ordem decrescente de quantidade. 
 	select nome,numero,count(numero) from hospede natural join hospedagem natural join apto
 	group by nome,numero order by count(numero) desc
 	
 -- 7. Categoria cujo nome tenha comprimento superior a 15 caracteres. 
 	select nome from categoria where length(nome) > 15
 
--- 8. Número dos apartamentos ocupados no ano de 2017 com o respectivo nome da sua categoria. 
+-- 8. Número dos apartamentos ocupados no ano de 2017 com o respectivo nome da sua categoria.
 -- 9. Título do livro, nome da editora que o publicou e a descrição do assunto. 
--- 10. Crie a tabela funcionário com as atributos: cod_func, nome, dt_nascimento e salário. Depois disso, acrescente o cod_func como chave estrangeira nas tabelas hospedagem e reserva. 
+-- 10. Crie a tabela funcionário com as atributos: cod_func, nome, dt_nascimento e salário. Depois disso, acrescente 
+-- o cod_func como chave estrangeira nas tabelas hospedagem e reserva. 
 	alter table funcionario add salario float;
 
 	update funcionario set salario=1200.00 where cod_funcionario=1
 	update funcionario set salario=1600.00 where cod_funcionario=2
 	update funcionario set salario=2000.00 where cod_funcionario=3
 	
--- 11. Mostre o nome e o salário de cada funcionário.  Extraordinariamente, cada funcionário receberá um acréscimo neste salário de 10 reais para cada hospedagem realizada. 
--- 12. Listagem das categorias cadastradas e para aquelas que possuem apartamentos, relacionar também o número do apartamento, ordenada pelo nome da categoria e pelo número do apartamento. 
--- 13. Listagem das categorias cadastradas e para aquelas que possuem apartamentos, relacionar também o número do apartamento, ordenada pelo nome da categoria e pelo número do apartamento. Para aquelas que não possuem apartamentos associados, escrever "não possui apartamento". 
--- 14. O nome dos funcionário que atenderam o João (hospedando ou reservando) ou que hospedaram ou reservaram apartamentos da categoria luxo.
+-- 11. Mostre o nome e o salário de cada funcionário.  Extraordinariamente, cada funcionário receberá um 
+-- acréscimo neste salário de 10 reais para cada hospedagem realizada. 
+-- 12. Listagem das categorias cadastradas e para aquelas que possuem apartamentos, relacionar também o 
+-- número do apartamento, ordenada pelo nome da categoria e pelo número do apartamento. 
+	select nome,numero from categoria natural join apto
+	order by nome asc,numero asc
+	
+-- 13. Listagem das categorias cadastradas e para aquelas que possuem apartamentos, relacionar também o 
+-- número do apartamento, ordenada pelo nome da categoria e pelo número do apartamento. Para aquelas que não 
+-- possuem apartamentos associados, escrever "não possui apartamento". 
+-- 14. O nome dos funcionário que atenderam o João (hospedando ou reservando) ou que hospedaram ou reservaram 
+-- apartamentos da categoria luxo.
 	select funcionario.nome from funcionario natural join hospedagem 
 	inner join hospede on (hospedagem.cod_hospede=hospede.cod_hospede)
 	where hospede.nome='João'
@@ -360,9 +379,23 @@ insert into reserva values(10,'2016-04-22','2016-04-28',6,2,104)
 	where categoria.nome ilike 'luxo%'
 	
 -- 15. O código das hospedagens realizadas pelo hóspede mais velho que se hospedou no apartamento mais caro. 
--- 16. Sem usar subquery, o nome dos hóspedes que nasceram na mesma data do hóspede de código 2. 
+-- 16. Sem usar subquery, o nome dos hóspedes que nasceram na mesma data do hóspede de código 2. 	
+	select h2.nome from hospede as h1 cross join hospede as h2
+	where h1.cod_hospede = 2 and h1.dt_nasc = h2.dt_nasc and h2.cod_hospede != 2
+	
 -- 17. O nome do hóspede mais velho que se hospedou na categoria mais cara mo ano de 2017. 
--- 18. O nome das categorias que foram reservadas pela Maria ou que foram ocupadas pelo João quando ele foi atendido pelo Joaquim.	
+-- 18. O nome das categorias que foram reservadas pela Maria ou que foram ocupadas pelo João quando ele foi atendido pelo Joaquim.
+	select categoria.nome from hospede natural join reserva natural join apto
+	inner join categoria on (apto.cod_categoria=categoria.cod_categoria)
+	where hospede.nome ilike 'Maria%'
+	
+			union
+	
+	select categoria.nome from hospede natural join hospedagem inner join funcionario
+	on (hospedagem.cod_funcionario=funcionario.cod_funcionario)
+	natural join apto inner join categoria on (apto.cod_categoria=categoria.cod_categoria)
+	where hospede.nome ilike 'João%' and funcionario.nome ilike 'Joaquim%'
+	
 -- 19. O nome e a data de nascimento dos funcionários, além do valor de diária mais cara reservado por cada um deles. 
 	select funcionario.nome,dt_nasc,max(valor_dia) from funcionario natural join reserva 
 	natural join apto inner join categoria on (apto.cod_categoria=categoria.cod_categoria)
@@ -370,27 +403,29 @@ insert into reserva values(10,'2016-04-22','2016-04-28',6,2,104)
 	
 -- 20. A quantidade de apartamentos ocupados por cada um dos hóspedes (mostrar o nome). 
 	select nome,count(numero) from hospede natural join hospedagem natural join apto
-	group by cod_hospede
+	group by nome
 	
--- 21. A relação com o nome dos hóspedes, a data de entrada, a data de saída e o valor total pago em diárias (não é necessário considerar a hora de entrada e saída, apenas as datas). 
+-- 21. A relação com o nome dos hóspedes, a data de entrada, a data de saída e o valor total pago em 
+-- diárias (não é necessário considerar a hora de entrada e saída, apenas as datas).
+	select hospede.nome,dt_entrada,dt_saida,to_number(to_char(age(dt_saida,dt_entrada),'DDD'),'00000')*valor_dia
+	as valor_total_pago from hospede natural join hospedagem natural join apto
+	inner join categoria on (apto.cod_categoria=categoria.cod_categoria)
+		
 -- 22. O nome dos hóspedes que já se hospedaram em todos os apartamentos do hotel.
 	select nome from hospede natural join hospedagem natural join apto
 	group by nome having count(distinct numero) = (select count(numero) from apto)
  
 
 
-
+-- Usando o check para verificar se a pessoa a ser inserida no banco de dados é maior de idade
 create table pessoa(
 	nome varchar(100),
 	dt_nasc date check (age(current_date,dt_nasc) >= '18 year')
 );
+
 select * from pessoa		
 insert into pessoa values('Pedro','1995-12-02')
 insert into pessoa values('Caio','2005-05-26')
 drop table pessoa		
-
-select (age(current_date, timestamp '2018-03-13'))
-			
-			
 			
 			
