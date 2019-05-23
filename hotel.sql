@@ -228,8 +228,7 @@ insert into reserva values(11,'2018-12-02','2018-12-18',2,4,201)
 	update categoria set valor_dia=valor_dia + valor_dia*0.10 where cod_categoria=4
 	update categoria set valor_dia=valor_dia + valor_dia*0.10 where cod_categoria=5
 	
--- 23. O nome das categorias que não possuem 
-apartamentos. 
+-- 23. O nome das categorias que não possuem apartamentos. 
 	select nome from categoria where cod_categoria not in
 	(select cod_categoria from categoria natural join apto)
 	
@@ -241,20 +240,19 @@ apartamentos.
 	select numero from hospede natural join hospedagem natural join apto
 	inner join categoria on (apto.cod_categoria=categoria.cod_categoria)
 	where hospede.nome='João' and valor_dia in
-	(select max(valor_dia) from hospede natural join hospedagem 
-	natural join apto inner join categoria on (apto.cod_categoria=categoria.cod_categoria)
-	where hospede.nome='João') limit 1
+	(select max(valor_dia) from hospede natural join hospedagem natural join apto
+	inner join categoria on (apto.cod_categoria=categoria.cod_categoria)
+	where hospede.nome='João')
 
 -- 26. O nome dos hóspedes que nunca se hospedaram no apartamento 201.
-	select distinct nome from hospede natural join hospedagem natural join apto
-	where numero != 201 and cod_hospede not in 
+	select distinct nome from hospede
+	where cod_hospede not in 
 	(select cod_hospede from hospede natural join hospedagem natural join apto
 	where numero = 201)
 	
 -- 27. O nome dos hóspedes que nunca se hospedaram em apartamentos da categoria LUXO. 
-	select distinct hospede.nome from hospede natural join hospedagem natural join apto 
-	inner join categoria on (apto.cod_categoria = categoria.cod_categoria)
-	where upper(categoria.nome) != 'LUXO' and cod_hospede not in 
+	select distinct nome from hospede 
+	where cod_hospede not in 
 	(select cod_hospede from hospede natural join hospedagem natural join apto 
 	inner join categoria on (apto.cod_categoria = categoria.cod_categoria)
 	where upper(categoria.nome) = 'LUXO')	
@@ -271,12 +269,13 @@ apartamentos.
 	where upper(categoria.nome) = 'LUXO'
 	
 -- 29. O nome dos hóspedes que se hospedaram mas nunca reservaram apartamentos do tipo LUXO.
-	select distinct hospede.nome from hospede natural join hospedagem natural join apto
+	select hospede.nome from hospede natural join hospedagem natural join apto
 	inner join categoria on (apto.cod_categoria = categoria.cod_categoria)
-	where upper(categoria.nome) = 'LUXO' and hospede.cod_hospede not in
-	(select hospede.cod_hospede from hospede natural join reserva natural join apto
+	where upper(categoria.nome) = 'LUXO' 
+	except
+	select hospede.nome from hospede natural join reserva natural join apto
 	inner join categoria on (apto.cod_categoria = categoria.cod_categoria)
-	where upper(categoria.nome) = 'LUXO')
+	where upper(categoria.nome) = 'LUXO'
 
 -- 30. O nome dos hóspedes que se hospedaram e reservaram apartamento do tipo LUXO.
 	select hospede.nome from hospede natural join hospedagem natural join apto
@@ -288,14 +287,6 @@ apartamentos.
 	select hospede.nome from hospede natural join reserva natural join apto
 	inner join categoria on (apto.cod_categoria = categoria.cod_categoria)
 	where upper(categoria.nome) = 'LUXO'
-	
-	-- OUTRA MANEIRA DE FAZER
-	select distinct hospede.nome from hospede natural join hospedagem natural join apto
-	inner join categoria on (apto.cod_categoria = categoria.cod_categoria)
-	where upper(categoria.nome) = 'LUXO' and hospede.cod_hospede in
-	(select hospede.cod_hospede from hospede natural join reserva natural join apto
-	inner join categoria on (apto.cod_categoria = categoria.cod_categoria)
-	where upper(categoria.nome) = 'LUXO')
 							
 							
 							
@@ -346,6 +337,9 @@ apartamentos.
 	
 -- 11. Mostre o nome e o salário de cada funcionário.  Extraordinariamente, cada funcionário receberá um 
 -- acréscimo neste salário de 10 reais para cada hospedagem realizada. 
+	select nome,salario+10*count(cod_hospedagem) from funcionario natural join hospedagem
+	group by nome,salario
+	
 -- 12. Listagem das categorias cadastradas e para aquelas que possuem apartamentos, relacionar também o 
 -- número do apartamento, ordenada pelo nome da categoria e pelo número do apartamento. 
 	select nome,numero from categoria natural join apto
@@ -414,18 +408,6 @@ apartamentos.
 -- 22. O nome dos hóspedes que já se hospedaram em todos os apartamentos do hotel.
 	select nome from hospede natural join hospedagem natural join apto
 	group by nome having count(distinct numero) = (select count(numero) from apto)
- 
-
-
--- Usando o check para verificar se a pessoa a ser inserida no banco de dados é maior de idade
-create table pessoa(
-	nome varchar(100),
-	dt_nasc date check (age(current_date,dt_nasc) >= '18 year')
-);
-
-select * from pessoa		
-insert into pessoa values('Pedro','1995-12-02')
-insert into pessoa values('Caio','2005-05-26')
-drop table pessoa		
+ 	
 			
 			
