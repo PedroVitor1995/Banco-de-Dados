@@ -70,6 +70,26 @@
 		nome varchar(50)
 	);
 	
+	create or replace function funcao_aluno()
+	returns trigger as $$
+	begin
+		if new.nome ilike 'a%' then
+			raise exception 'Não é permitido aluno que o nome inicia com a letra A';
+		end if;
+		return new;
+	end;
+	$$ language plpgsql;
+	
+	create trigger gatilho_aluno
+	before insert or update on aluno
+	for each row
+	execute procedure funcao_aluno();
+	
+	insert into aluno values(1,'Pedro')
+	insert into aluno values(2,'Ana')
+	
+	update aluno set nome='Antonio' where matricula=1
+	
 	select * from aluno
 	
 	-- 	Exercício 2 de 4: Primeiro crie uma tabela chamada Funcionário com os seguintes campos: código (int), nome (varchar(30)), 
@@ -85,14 +105,276 @@
 		usuario_que_atualizou varchar(30)
 	);
 	
+	create or replace function funcao_funcionario()
+	returns trigger as $$
+	begin
+		if new.nome is null then
+			raise exception 'Não é permitido nome nulo';
+		end if;
+		if new.salario is null then
+			raise exception 'Não é permitido salario nulo';
+		end if;
+		if new.salario  <= 0 then
+			raise exception 'Não é permitido salario negativo';
+		end if;
+		new.data_ultima_atualizacao = 'now';
+		new.usuario_que_atualizou = current_user;
+		return new;
+	end;
+	$$ language plpgsql;
 	
+	create trigger gatilho_funcionario
+	before insert or update on funcionario
+	for each row
+	execute procedure funcao_funcionario();
+	
+	insert into funcionario values(1,'João',100);
+	insert into funcionario values(2,null,100);
+	insert into funcionario values(3,'João',-1);
+	
+	select * from funcionario
+
 	 -- Exercício 3 de 4:Agora crie uma tabela chamada Empregado com os atributos nome e salário. Crie também outra tabela chamada
 	 -- Empregado_auditoria com os atributos: operação (char(1)), usuário (varchar), data (timestamp), nome (varchar), salário
 	 -- (integer) . Agora crie um trigger que registre na tabela Empregado_auditoria a modificação que foi feita na tabela empregado
 	 -- (E,A,I), quem fez a modificação, a data da modificação, o nome do empregado que foi alterado e o salário atual dele. 
 	 -- Obs: variável especial TG_OP
+	 create table empregado(
+		 nome varchar(50),
+		 salario integer
+	 );
 	 
-	  -- Exercício 2 de 4:Crie a tabela Empregado2 com os atributos código (serial e chave primária), nome (varchar) e salário (integer). 
+	 create table empregado_auditoria(
+		 operacao char(1),
+		 usuario varchar(50),
+		 data timestamp,
+		 nome varchar(50),
+		 salario integer
+	 );
+	
+	create or replace function funcao_empregado()
+	returns trigger as $$
+	begin
+		if TG_OP = 'INSERT' then
+			insert into empregado_auditoria values('I',current_user,'now',new.nome,new.salario);
+			return new;
+		end if;
+		if TG_OP = 'UPDATE' then
+			insert into empregado_auditoria values('A',current_user,'now',new.nome,new.salario);
+			return new;
+		end if;
+		if TG_OP = 'DELETE' then
+			insert into empregado_auditoria values('E',current_user,'now',old.nome,old.salario);
+			return old;
+		end if;
+		return null;
+	end;
+	$$ language plpgsql;
+
+	create trigger gatilho_empregado
+	before insert or update or delete on empregado
+	for each row
+	execute procedure funcao_empregado();
+
+	insert into empregado values('Mario',1000); 
+	insert into empregado values('Ana',2000); 
+
+	update empregado set nome = 'Pedro' where nome = 'Mario';
+
+	delete from empregado where nome = 'Ana'
+
+	select * from empregado
+	select * from empregado_auditoria
+		
+  	-- Exercício 4 de 4:Crie a tabela Empregado2 com os atributos código (serial e chave primária), nome (varchar) e salário (integer). 
 	  -- Crie também a tabela Empregado2_audit com os seguintes atributos: usuário (varchar), data (timestamp), id (integer),  
 	  -- coluna (text), valor_antigo (text), valor_novo(text).  Agora crie um trigger que não permita a alteração da chave primária 
 	  -- e insira registros na tabela Empregado2_audit para refletir as alterações realizadas na tabela Empregado2. 
+	  create table empregado2(
+		  codigo serial primary key,
+		  nome varchar(50),
+		  salario integer
+	  );
+
+	  create table empregado2_auditoria(
+		  usuario varchar(50),
+		  data timestamp,
+		  id integer,
+		  coluna text,
+		  valor_antigo text,
+		  valor_novo text
+	  );
+
+	  create or replace function funcao_empregado2()
+	  returns trigger as $$
+		 begin
+		 	if new.codigo != old.codigo then
+				raise exception 'Não é permitido atualizar chave primária';
+			end if;
+			if new.nome != old.nome then
+				insert into empregado2_auditoria values (current_user,current_timestamp,old.codigo,'nome',old.nome,new.nome);
+			end if;
+			if new.salario != old.salario then
+				insert into empregado2_auditoria values (current_user,current_timestamp,old.codigo,'salario',old.salario,new.salario);
+			end if;
+			return null;
+		end;
+	$$ language plpgsql;
+
+	create trigger gatilho_empregado2
+	after update on empregado2
+	for each row
+	execute procedure funcao_empregado2();
+
+	insert into empregado2 values (1,'Pedro',3000)
+	insert into empregado2 values (2,'Mario',3000)
+	
+	update empregado2 set nome = 'Paula' where codigo = 1
+	update empregado2 set salario = 2500 where codigo = 2
+
+	
+	select * from empregado2
+	select * from empregado2_auditoria
+  	
+			
+			-- EXERCICIO FUNÇÂO --
+
+	create table cliente(
+		cod_cliente serial primary key not null,
+		nome varchar(150),
+		endereco varchar(100)
+	);
+
+	create table titulo(
+		cod_titulo serial primary key not null,
+		descricao_titulo varchar(100)
+	);
+	
+	create table livro(
+		cod_livro serial primary key not null,
+		cod_titulo int not null references titulo(cod_titulo),
+		valor_unitario real,
+		quant_estoque int
+	);
+
+	create table venda1(
+		cod_venda int,
+		cod_cliente int,
+		data_venda date,
+		hora_venda timestamp,
+		valor_total_venda real,
+		quant_itens_vendidos int
+	);
+	
+	create table item_venda(
+		cod_livro int,
+		cod_venda int,
+		quantidade_item int,
+		valor_total_item real
+	);
+	
+	insert into cliente values(default,'FORNECEDOR LEGAL', 'ATRAS DE VOCE')
+	insert into cliente values(default,'FORNECEDOR CHATO', 'SEU VIZINHO')
+	insert into cliente values(default,'FORNECEDOR', 'ALI')
+	
+	insert into titulo values(default,'A VOLTA DOS QUE NÃO FORAM')
+	insert into titulo values(default,'BRUXEIRO 3: A CAÇADA SELVAGEM')
+	insert into titulo values(default,'BRUXEIRO 2: MATADOR DE REIS')
+
+	insert into livro values(default,1,10,80)
+	insert into livro values(default,2,5,50)
+	insert into livro values(default,3,3,30)
+
+
+
+	
+	-- Crie uma função que realiza VENDA de um único livro que possui estoque suficiente. O ato de realizar
+	-- VENDA consiste em inserir registros nas tabelas VENDA e Item_VENDA, além de decrementar a quantidade 
+	-- em estoque. Essa função deve receber apenas os seguintes parâmetros: Código dA VENDA, código do livro,
+	-- nome do CLIENTE (imagine que não existam dois CLIENTES com o mesmo nome) e quantidade vendida.
+	
+	create or replace function codigo_cliente(nome_cliente varchar(150))
+	returns int as $$
+	
+	declare
+	codigo int;
+	
+	begin
+		select cod_cliente into codigo from cliente where nome = nome_cliente;
+		return codigo;
+	end;
+	$$ language 'plpgsql';
+	
+	create or replace function quatidade_estoque(codigo_livro int)
+	returns int as $$
+	
+	declare
+	estoque int;
+	
+	begin
+		select quant_estoque into estoque from livro where cod_livro = codigo_livro;
+		return estoque;
+	end;
+	$$ language 'plpgsql';
+	
+	create or replace function valor_unitario_livro(codigo_livro int)
+	returns int as $$
+	
+	declare
+	valor int;
+	
+	begin
+		select valor_unitario into valor from livro where cod_livro = codigo_livro;
+		return valor;
+	end;
+	$$ language 'plpgsql';
+	
+	create or replace function realiza_venda(codigo_venda int,codigo_livro int,nome_cliente varchar(150),quatidade_vendida int)
+	returns void as $$
+	
+	declare
+	estoque_disponivel int := quatidade_estoque(codigo_livro);
+	valor_livro real := valor_unitario_livro(codigo_livro);
+	codigo_cliente int  := codigo_cliente(nome_cliente);
+	atualizar_estoque int := estoque_disponivel - quatidade_vendida;
+	
+	begin
+		if codigo_cliente is not null then
+			if valor_livro is not null then
+				if estoque_disponivel > quatidade_vendida then
+					insert into venda1 values(codigo_venda, codigo_cliente, current_date, 'now',quatidade_vendida*valor_livro, quatidade_vendida);
+					insert into item_venda values(codigo_livro,codigo_venda,quatidade_vendida,quatidade_vendida*valor_livro);
+					update livro set quant_estoque = atualizar_estoque where cod_livro = codigo_livro;
+				else
+					raise exception 'Estoque insuficiente';
+				end if;
+			else
+				raise exception 'Livro não existe';
+			end if;
+		else
+			raise exception 'Cliente não existe';
+		end if;
+			
+	end;
+	$$ language 'plpgsql';
+	
+	
+	select realiza_venda(1,1,'FORNECEDOR',30);
+	select realiza_venda(1,2,'FORNECEDOR LEGAL',20);
+	select realiza_venda(1,6,'FORNECEDOR CHATO',15);
+	select realiza_venda(1,2,'FORNECEDOR LEGAL',10);
+	select realiza_venda(2,6,'FORNECEDOR',10);
+	
+	
+	select * from venda1
+	select * from item_venda
+	select * from cliente
+	select * from livro
+
+	
+	-- Crie uma função que realiza VENDA como deve ser. Inserções nas tabelas VENDA e Item_VENDA, além
+	-- da atualização da quantidade em estoque. No primeiro produto, devem haver inserções nas duas tabelas.
+	-- A partir do segundo, apenas na tebela Item_VENDA. Não esqueça de decrementar a quantidade em estoque, 
+	-- de atualizar o valor total da VENDA e a quantidade de itens da tabela VENDA.
+	-- Os parâmetros passados para a função são os mesmos da questão anterior.
+
