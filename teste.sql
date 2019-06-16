@@ -293,7 +293,7 @@
 	-- em estoque. Essa função deve receber apenas os seguintes parâmetros: Código dA VENDA, código do livro,
 	-- nome do CLIENTE (imagine que não existam dois CLIENTES com o mesmo nome) e quantidade vendida.
 	
-	create or replace function codigo_cliente(nome_cliente varchar(150))
+	create or replace function getcodigo_cliente(nome_cliente varchar(150))
 	returns int as $$
 	
 	declare
@@ -335,14 +335,14 @@
 	declare
 	estoque_disponivel int := quatidade_estoque(codigo_livro);
 	valor_livro real := valor_unitario_livro(codigo_livro);
-	codigo_cliente int  := codigo_cliente(nome_cliente);
+	codigo_cliente int  := getcodigo_cliente(nome_cliente);
 	atualizar_estoque int := estoque_disponivel - quatidade_vendida;
 	
 	begin
 		if codigo_cliente is not null then
 			if valor_livro is not null then
 				if estoque_disponivel > quatidade_vendida then
-					insert into venda1 values(codigo_venda, codigo_cliente, current_date, 'now',quatidade_vendida*valor_livro, quatidade_vendida);
+					insert into venda1 values(codigo_venda, codigo_cliente, current_date,'now',quatidade_vendida*valor_livro, quatidade_vendida);
 					insert into item_venda values(codigo_livro,codigo_venda,quatidade_vendida,quatidade_vendida*valor_livro);
 					update livro set quant_estoque = atualizar_estoque where cod_livro = codigo_livro;
 				else
@@ -361,9 +361,9 @@
 	
 	select realiza_venda(1,1,'FORNECEDOR',30);
 	select realiza_venda(1,2,'FORNECEDOR LEGAL',20);
-	select realiza_venda(1,6,'FORNECEDOR CHATO',15);
-	select realiza_venda(1,2,'FORNECEDOR LEGAL',10);
-	select realiza_venda(2,6,'FORNECEDOR',10);
+	select realiza_venda(1,3,'FORNECEDOR CHATO',15);
+	select realiza_venda(2,3,'FORNECEDOR',10);
+	select realiza_venda(2,2,'FORNECEDOR CHATO',10);
 	
 	
 	select * from venda1
@@ -377,4 +377,83 @@
 	-- A partir do segundo, apenas na tebela Item_VENDA. Não esqueça de decrementar a quantidade em estoque, 
 	-- de atualizar o valor total da VENDA e a quantidade de itens da tabela VENDA.
 	-- Os parâmetros passados para a função são os mesmos da questão anterior.
+	
+	create or replace function getcodigo_venda(codigo_venda int)
+	returns int as $$
+	
+	declare
+	codigo int;
+	
+	begin
+		select cod_venda into codigo from venda1 where cod_venda = codigo_venda;
+		return codigo;
+	end;
+	$$ language 'plpgsql';
+	
+	create or replace function contagem_item_venda(codigo_venda int ,codigo_livro int)
+	returns int as $$
+	
+	declare
+	contador int;
+	
+	begin
+		select count(*) into contador from item_venda where cod_venda = codigo_venda and cod_livro = codigo_livro;
+		return contador;
+	end;
+	$$ language 'plpgsql';
+	
+	
+	create or replace function fazer_venda(codigo_venda int,codigo_livro int,nome_cliente varchar(150),quatidade_vendida int)
+	returns void as $$
+	
+	declare
+	estoque_disponivel int := quatidade_estoque(codigo_livro);
+	valor_livro real := valor_unitario_livro(codigo_livro);
+	codigo_cliente int  := getcodigo_cliente(nome_cliente);
+	codigo_venda_temp int := getcodigo_venda(codigo_venda);
+	atualizar_estoque int := estoque_disponivel - quatidade_vendida;
+	contador_item_venda int := contagem_item_venda(codigo_venda,codigo_livro);
 
+	begin
+		if codigo_cliente is not null then
+			if valor_livro is not null then
+				if estoque_disponivel > quatidade_vendida then
+					if codigo_venda_temp is null then
+						insert into venda1 values(codigo_venda, codigo_cliente, current_date, 'now',quatidade_vendida*valor_livro, quatidade_vendida);
+						insert into item_venda values(codigo_livro,codigo_venda,quatidade_vendida,quatidade_vendida*valor_livro);
+						update livro set quant_estoque = atualizar_estoque where cod_livro = codigo_livro;
+					else
+						if contador_item_venda > 0 then
+							update item_venda set quantidade_item = quantidade_item + quatidade_vendida where cod_venda = codigo_venda and cod_livro = codigo_livro;
+							update item_venda set valor_total_item = valor_total_item + (quatidade_vendida*valor_livro) where cod_venda = codigo_venda and cod_livro = codigo_livro;
+
+						else
+							insert into item_venda values(codigo_livro,codigo_venda,quatidade_vendida,quatidade_vendida*valor_livro);
+						end if;
+						update venda1 set valor_total_venda = valor_total_venda + (quatidade_vendida*valor_livro) where cod_venda = codigo_venda;
+						update venda1 set quant_itens_vendidos = quant_itens_vendidos + quatidade_vendida where cod_venda = codigo_venda;
+						update livro set quant_estoque = atualizar_estoque where cod_livro = codigo_livro;
+					end if;
+				else
+					raise exception 'Estoque insuficiente';
+				end if;
+			else
+				raise exception 'Livro não existe';
+			end if;
+		else
+			raise exception 'Cliente não existe';
+		end if;
+			
+	end;
+	$$ language 'plpgsql';
+
+	select fazer_venda(4,1,'FORNECEDOR LEGAL',15);
+	select fazer_venda(4,2,'FORNECEDOR LEGAL',5);
+	select fazer_venda(4,1,'FORNECEDOR LEGAL',15);
+
+	select * from venda1
+	select * from item_venda
+	select * from cliente
+	select * from livro
+	
+	
