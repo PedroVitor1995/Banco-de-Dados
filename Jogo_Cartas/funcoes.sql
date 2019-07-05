@@ -13,18 +13,34 @@ valor_temp int;
 begin
 
 	select * into carta_recebida from Buscar(NULL::carta, 'nome', nome_carta);
+	select cod_tipo into cod_tipo_temp from Buscar(NULL::tipo, 'nome', tipo_carta);
+	select valor into valor_temp from Buscar(NULL::nivel, 'cod_nivel', ''||nivel_carta||'');
+	select cod_elemento into cod_elemento_temp from Buscar(NULL::elemento, 'nome', ''||elemento_carta||'');
+	select cod_jogador into cod_jogador_temp from Buscar(NULL::jogador, 'nome', jogador_carta);
+	
 	if carta_recebida.nome is not null then
 		raise exception 'Já existe carta com o nome %', nome_carta; 
 	end if; 
 	
 	if tipo_carta not ilike '''monstro''' then
-		raise exception 'carta % não pode ser cadastrada. Tipo incompativel com os valores passados', nome_carta;
+		raise exception 'Carta % não pode ser cadastrada. Tipo incompativel com os valores passados', nome_carta;
 	end if;
 	
-	select cod_tipo into cod_tipo_temp from Buscar(NULL::tipo, 'nome', tipo_carta);
-	select valor into valor_temp from Buscar(NULL::nivel, 'cod_nivel', ''||nivel_carta||'');
-	select cod_elemento into cod_elemento_temp from Buscar(NULL::elemento, 'nome', ''||elemento_carta||'');
-	select cod_jogador into cod_jogador_temp from Buscar(NULL::jogador, 'nome', jogador_carta);
+	if cod_tipo_temp is  null then
+		raise exception 'Elemento % não existe',tipo_carta;
+	end if;
+	
+	if valor_temp is null then
+		raise exception 'Nivel % não existe',nivel_carta;
+	end if;
+	
+	if cod_elemento_temp is null then
+		raise exception 'Elemento % não existe',elemento_carta;
+	end if;
+	
+	if cod_jogador_temp is null then
+		raise exception 'Jogador % não existe',jogador_carta;
+	end if;
 	
 	-- saber o ataque da carta dependendo do nivel que ele passar. Se a carta for tipo monstro ok. senao ''null''
 	perform inserir('carta',''||nome_carta||','''||valor_temp||''','''||cod_tipo_temp||''','''||nivel_carta||''',
@@ -76,30 +92,29 @@ monstro_existe boolean := Existe('carta', monstro);
 magica_existe boolean := Existe('carta', magica);
 monstro_recebido carta%rowtype;
 magica_recebido carta%rowtype;
-cod_part int;
 tipo_recebido_monstro tipo%rowtype;
 tipo_recebido_magica tipo%rowtype;
-BEGIN
-	select cod_cliente into cod_cliente_temp from cliente where nome = nome_cliente;
+begin
+
 	select * into monstro_recebido from Buscar(NULL::carta,'nome',monstro);
 	select * into magica_recebido from Buscar(NULL::carta,'nome',magica);
 	select * into tipo_recebido_monstro from Buscar(NULL::tipo,'cod_tipo',''||monstro_recebido.tipo||'');
 	select * into tipo_recebido_magica from Buscar(NULL::tipo,'cod_tipo',''||magica_recebido.tipo||'');
 		
 	if monstro_recebido.cod_carta is null then
-		raise exception 'carta com o nome % não existe', monstro;
+		raise exception 'Carta com o nome % não existe', monstro;
 	end if;
 	
 	if magica_recebido.cod_carta is null then
-		raise exception 'carta com o nome % não existe', magica;
+		raise exception 'Carta com o nome % não existe', magica;
 	end if;
 	
 	if tipo_recebido_monstro.nome not ilike 'monstro' or tipo_recebido_magica.nome not ilike 'magica' then
-		raise exception 'tipo incompativeis aos nomes passados';
+		raise exception 'Tipo incompativeis aos nomes passados';
 	end if;
 	
 	if monstro_recebido.jogador <> magica_recebido.jogador then
-		raise exception 'equipamento invalido. Cartas de jogadores diferentes';
+		raise exception 'Equipamento invalido. Cartas de jogadores diferentes';
 	end if;
 	
 	if(monstro_recebido.equipamento is not null)then 
@@ -150,7 +165,7 @@ begin
 	end if;
 	
 	if campo_recebido.cod_carta is null then
-		raise exception 'carta campo invalida';
+		raise exception 'Carta campo invalida';
 	end if;
 	
 	if cenario_temp.cod_cenario is null then
@@ -158,7 +173,7 @@ begin
 	end if;
 	
 	if monstro1_recebido.jogador = monstro2_recebido.jogador then
-		raise exception 'cartas de um mesmo jogador não são permitidas para o duelo';
+		raise exception 'Cartas de um mesmo jogador não são permitidas para o duelo';
 	end if;
 	
 	atk_total_monstro1 := monstro1_recebido.atk;
