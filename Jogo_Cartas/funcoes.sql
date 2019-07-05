@@ -13,8 +13,7 @@ valor_temp int;
 begin
 
 	select * into carta_recebida from Buscar(NULL::carta, 'nome', nome_carta);
-
-	if(carta_recebida.nome is not null)then
+	if carta_recebida.nome is not null then
 		raise exception 'Já existe carta com o nome %', nome_carta; 
 	end if; 
 	
@@ -51,13 +50,11 @@ end;
 $$ language plpgsql;
 --------------------------------------------------------------------------------------------------------------------------
 
-
 --------------------------------------------------------------------------------------------------------------------------
 -- BUSCAR UM REGISTRO NA TABELA;
 create or replace function Buscar(tabela anyelement, chave varchar, valor varchar) returns setof anyelement as $$
 declare
 begin
-
 	
 	 return query EXECUTE format('
       SELECT *
@@ -83,7 +80,7 @@ cod_part int;
 tipo_recebido_monstro tipo%rowtype;
 tipo_recebido_magica tipo%rowtype;
 BEGIN
-
+	select cod_cliente into cod_cliente_temp from cliente where nome = nome_cliente;
 	select * into monstro_recebido from Buscar(NULL::carta,'nome',monstro);
 	select * into magica_recebido from Buscar(NULL::carta,'nome',magica);
 	select * into tipo_recebido_monstro from Buscar(NULL::tipo,'cod_tipo',''||monstro_recebido.tipo||'');
@@ -215,9 +212,12 @@ begin
 
 	perform(select inserir('partida','''now()'','||cenario_temp.cod_cenario||''));
 	select max(cod_partida) into cod_part from partida;
-	perform(select inserir('duelo',''''||cod_part||''','''||monstro1_recebido.cod_carta||''','''||vencedor||''','''||atk_total_monstro1||''''));
-	perform(select inserir('duelo',''''||cod_part||''','''||monstro2_recebido.cod_carta||''','''||vencedor||''','''||atk_total_monstro2||''''));
-	perform (select inserir('duelo',''''||cod_part||''','''||campo_recebido.cod_carta||''','''||vencedor||''',''0'''));
+	perform(select inserir('duelo',''''||cod_part||''','''||monstro1_recebido.cod_carta||''',
+						   '''||vencedor||''','''||atk_total_monstro1||''''));
+	perform(select inserir('duelo',''''||cod_part||''','''||monstro2_recebido.cod_carta||''',
+						   '''||vencedor||''','''||atk_total_monstro2||''''));
+	perform (select inserir('duelo',''''||cod_part||''','''||campo_recebido.cod_carta||''',
+							'''||vencedor||''',''0'''));
 	
 	update carta set atk = atk + (6 - nivel_carta_vencedora) where cod_carta = cod_carta_vencedora;
 	update jogador set pontos = pontos + 3 where cod_jogador = jogador_carta_vecedora;
