@@ -11,42 +11,50 @@ cod_elemento_temp int;
 cod_jogador_temp int;
 valor_temp int;
 begin
+	if nome_carta is null or tipo_carta is null or nivel_carta is null or
+		elemento_carta is null or jogador_carta is null then
+		raise exception 'Não é permitido valores nulos';
+	end if;
+
+	if length(trim(both '''' from nome_carta)) < 3 then
+		raise exception 'O nome da carta deve ter pelos menos dois caracteres';
+	end if;
 
 	select * into carta_recebida from Buscar(NULL::carta, 'nome', nome_carta);
 	select cod_tipo into cod_tipo_temp from Buscar(NULL::tipo, 'nome', tipo_carta);
 	select valor into valor_temp from Buscar(NULL::nivel, 'cod_nivel', ''||nivel_carta||'');
 	select cod_elemento into cod_elemento_temp from Buscar(NULL::elemento, 'nome', ''||elemento_carta||'');
 	select cod_jogador into cod_jogador_temp from Buscar(NULL::jogador, 'nome', jogador_carta);
-	
+
 	if carta_recebida.nome is not null then
 		raise exception 'Já existe carta com o nome %', nome_carta; 
 	end if; 
-	
+
 	if tipo_carta not ilike '''monstro''' then
 		raise exception 'Carta % não pode ser cadastrada. Tipo incompativel com os valores passados', nome_carta;
 	end if;
-	
+
 	if cod_tipo_temp is  null then
 		raise exception 'Tipo % não existe',tipo_carta;
 	end if;
-	
+
 	if valor_temp is null then
 		raise exception 'Nivel % não existe',nivel_carta;
 	end if;
-	
+
 	if cod_elemento_temp is null then
 		raise exception 'Elemento % não existe',elemento_carta;
 	end if;
-	
+
 	if cod_jogador_temp is null then
 		raise exception 'Jogador % não existe',jogador_carta;
 	end if;
-	
+
 	-- saber o ataque da carta dependendo do nivel que ele passar. Se a carta for tipo monstro ok. senao ''null''
 	perform inserir('carta',''||nome_carta||','''||valor_temp||''','''||cod_tipo_temp||''','''||nivel_carta||''',
 							'''||cod_elemento_temp||''',null,null,'''||cod_jogador_temp||'''');
 	return query select * from carta where cod_carta in (select max(cod_carta) from carta);
-	
+
 end;
 $$ language plpgsql;
 --------------------------------------------------------------------------------------------------------------------------
@@ -95,7 +103,10 @@ magica_recebido carta%rowtype;
 tipo_recebido_monstro tipo%rowtype;
 tipo_recebido_magica tipo%rowtype;
 begin
-
+	if monstro is null or magica is null then
+		raise exception 'Não é permitido valores nulos';
+	end if;
+	
 	select * into monstro_recebido from Buscar(NULL::carta,'nome',monstro);
 	select * into magica_recebido from Buscar(NULL::carta,'nome',magica);
 	select * into tipo_recebido_monstro from Buscar(NULL::tipo,'cod_tipo',''||monstro_recebido.tipo||'');
@@ -151,6 +162,10 @@ atk_total_monstro2 real;
 cenario_temp cenario%rowtype;
 begin
 
+	if monstro1 is null or monstro2 is null or campo is null or cenario is null then
+		raise exception 'Não é permitido valores nulos';
+	end if;
+	
 	select * into monstro1_recebido from Buscar(NULL::carta,'nome',monstro1);
 	select * into monstro2_recebido from Buscar(NULL::carta,'nome',monstro2);
 	select * into campo_recebido from Buscar(NULL::carta,'nome',campo);
@@ -179,9 +194,11 @@ begin
 	if monstro1 = monstro2 then
 		if monstro1 = ilike 'campo' then
 			raise exception 'Não é permitido duelar com duas cartas %',monstro1;
+		end if;
 		
 		if monstro1 = ilike 'magica' then
 			raise exception 'Não é permitido duelar com duas cartas %',monstro1;
+		end if;
 	end if;
 	
 	atk_total_monstro1 := monstro1_recebido.atk;
@@ -192,6 +209,7 @@ begin
 		atk_total_monstro1 :=  atk_total_monstro1 + monstro1_recebido_equipamento.pontos_magia; 
 		update carta set equipamento = null where cod_carta = monstro1_recebido.cod_carta;
 	end if;
+	
 	if monstro2_recebido.equipamento is not null then 
 		select * into monstro2_recebido_equipamento from Buscar(NULL::carta,'cod_carta',''||monstro2_recebido.equipamento||'');
 		atk_total_monstro2 := atk_total_monstro2 + monstro2_recebido_equipamento.pontos_magia; 
@@ -305,8 +323,6 @@ $$ language plpgsql;
 
 --------------------------------------------------------------------------------------------------------------------------
 create or replace function inserir(tabela text, valores text) returns void as $$
-declare
-
 begin			   
 	if tabela ilike 'duelo' then
 		execute 'insert into ' || quote_ident(tabela) || ' values('||valores||')'
