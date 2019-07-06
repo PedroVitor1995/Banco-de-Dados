@@ -27,7 +27,7 @@ begin
 	end if;
 	
 	if cod_tipo_temp is  null then
-		raise exception 'Elemento % não existe',tipo_carta;
+		raise exception 'Tipo % não existe',tipo_carta;
 	end if;
 	
 	if valor_temp is null then
@@ -176,6 +176,14 @@ begin
 		raise exception 'Cartas de um mesmo jogador não são permitidas para o duelo';
 	end if;
 	
+	if monstro1 = monstro2 then
+		if monstro1 = ilike 'campo' then
+			raise exception 'Não é permitido duelar com duas cartas %',monstro1;
+		
+		if monstro1 = ilike 'magica' then
+			raise exception 'Não é permitido duelar com duas cartas %',monstro1;
+	end if;
+	
 	atk_total_monstro1 := monstro1_recebido.atk;
 	atk_total_monstro2 := monstro2_recebido.atk;
 	
@@ -275,7 +283,6 @@ $$ language plpgsql;
 --------------------------------------------------------------------------------------------------------------------------
 create or replace function verifica_nivel(carta_nivel int) returns void as $$
 declare
-
 carta_recebida carta%rowtype;
 valor_prox_nivel int;
 begin
