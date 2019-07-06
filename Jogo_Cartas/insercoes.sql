@@ -17,7 +17,18 @@ select inserir('nivel','''Iniciante'',''50''');
 select nova_carta('''campo magnetico''','''monstro''',1,'''eletrico''','''Pedro''');
 
 -- Realizar duelo
-select 
+
+
+
+-- Consultar
 select * from carta
+select * from cenario
+select * from duelo
+select * from elemento
+select * from jogador
+select * from nivel
+select * from partida
+select * from tipo
+
 
 
