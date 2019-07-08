@@ -1,3 +1,4 @@
+--FUNÇÃO NOVA_CARTA PARA CARTAS MONSTROS;
 --------------------------------------------------------------------------------------------------------------------------
 create or replace function nova_carta(nome_carta varchar, tipo_carta varchar, nivel_carta int,
 									  elemento_carta varchar, jogador_carta varchar) 
@@ -57,8 +58,100 @@ begin
 
 end;
 $$ language plpgsql;
---------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------
+-- FUNCÃO NOVA_CARTA PARA CARTAS MAGICAS;
+create or replace function nova_carta(nome_carta varchar, tipo_carta varchar, pontos_magia int, jogador_carta varchar) 
+returns setof carta as $$
+declare 
+carta_recebida carta%rowtype;
+cod_tipo_temp int;
+cod_jogador_temp int;
+begin
 
+	if nome_carta is null or tipo_carta is null or
+		pontos_magia is null or jogador_carta is null then
+		raise exception 'Não é permitido valores nulos';
+	end if;
+
+	select * into carta_recebida from Buscar(NULL::carta, 'nome', nome_carta);
+	select cod_tipo into cod_tipo_temp from Buscar(NULL::tipo, 'nome', tipo_carta);
+	select cod_jogador into cod_jogador_temp from Buscar(NULL::jogador, 'nome', jogador_carta);
+
+	if(carta_recebida.nome is not null)then
+		raise exception 'Já existe carta com o nome %', nome_carta; 
+	end if;
+	
+	if tipo_carta not ilike '''magica''' then
+		raise exception 'carta % não pode ser cadastrada. Tipo incompativel com os valores passados', nome_carta;
+	end if;
+	
+	if cod_tipo_temp is null then
+		raise exception 'Tipo % não existe',tipo_carta;
+	end if;
+	
+	if pontos_magia <= 0 then 
+		raise exception 'Não é permitido pontos de magia menor ou igual a zero';
+	end if;
+	
+	if cod_jogador_temp is null then
+		raise exception 'Jogador % não existe',jogador_carta;
+	end if;
+	
+	
+	-- saber o ataque da carta dependendo do nivel que ele passar. Se a carta for tipo monstro ok. senao 	
+	perform inserir('carta',''||nome_carta||',''0'','''||cod_tipo_temp||''',null,null,'''||pontos_magia||''',null,'''||cod_jogador_temp||'''');
+	return query select * from carta where cod_carta in (select max(cod_carta) from carta);
+	
+end;
+$$ language plpgsql;
+-------------------------------------------------------------------------------------------------------------------------
+-- FUNÇÃO CARTA PARA CARTAS CAMPO;
+--------------------------------------------------------------------------------------------------------------------------
+create or replace function nova_carta(nome_carta varchar, tipo_carta varchar, elemento_carta varchar, jogador_carta varchar) 
+returns setof carta as $$
+declare
+carta_recebida carta%rowtype;
+cod_tipo_temp int;
+cod_elemento_temp int;
+cod_jogador_temp int;
+begin
+
+	if nome_carta is null or tipo_carta is null or
+		elemento_carta is null or jogador_carta is null then
+		raise exception 'Não é permitido valores nulos';
+	end if;
+	
+	select * into carta_recebida from Buscar(NULL::carta, 'nome', nome_carta);
+	select cod_tipo into cod_tipo_temp from Buscar(NULL::tipo, 'nome', tipo_carta);
+	select cod_elemento into cod_elemento_temp from Buscar(NULL::elemento, 'nome', elemento_carta);
+	select cod_jogador into cod_jogador_temp from Buscar(NULL::jogador, 'nome', jogador_carta);
+	
+	if(carta_recebida.nome is not null)then
+		raise exception 'Já existe carta com o nome %', nome_carta; 
+	end if;
+	
+	if tipo_carta not ilike '''campo''' then
+		raise exception 'carta % não pode ser cadastrada. Tipo incompativel com os valores passados', nome_carta;
+	end if;
+	
+	if cod_tipo_temp is  null then
+		raise exception 'Tipo % não existe',tipo_carta;
+	end if;
+	
+	if cod_elemento_temp is null then
+		raise exception 'Elemento % não existe',elemento_carta;
+	end if;
+	
+	if cod_jogador_temp is null then
+		raise exception 'Jogador % não existe',jogador_carta;
+	end if;
+	
+	-- saber o ataque da carta dependendo do nivel que ele passar. Se a carta for tipo monstro ok. senao 	
+	perform inserir('carta',''||nome_carta||',''0'','''||cod_tipo_temp||''',null,'''||cod_elemento_temp||''',null,null,'''||cod_jogador_temp||'''');
+	return query select * from carta where cod_carta in (select max(cod_carta) from carta);
+
+end;
+$$ language plpgsql;
 --------------------------------------------------------------------------------------------------------------------------
 -- Função que verifica se existe o registro especificado.
 create or replace function Existe(tabela text, valor varchar) returns boolean as $$
@@ -121,7 +214,7 @@ begin
 	end if;
 	
 	if tipo_recebido_monstro.nome not ilike 'monstro' or tipo_recebido_magica.nome not ilike 'magica' then
-		raise exception 'Tipo incompativeis aos nomes passados';
+		raise exception 'Só pode equipar carta monstro com carta magica';
 	end if;
 	
 	if monstro_recebido.jogador <> magica_recebido.jogador then
@@ -146,6 +239,8 @@ declare
 monstro1_recebido carta%rowtype;
 monstro2_recebido carta%rowtype;
 campo_recebido carta%rowtype;
+monstro1_nome_tipo varchar;
+monstro2_nome_tipo varchar;
 monstro1_recebido_elemento elemento%rowtype;
 monstro2_recebido_elemento elemento%rowtype;
 campo_recebido_elemento elemento%rowtype;
@@ -168,6 +263,8 @@ begin
 	
 	select * into monstro1_recebido from Buscar(NULL::carta,'nome',monstro1);
 	select * into monstro2_recebido from Buscar(NULL::carta,'nome',monstro2);
+	select nome into monstro1_nome_tipo from Buscar(NULL::tipo,'cod_tipo',monstro1_recebido.tipo);
+	select nome into monstro2_nome_tipo from Buscar(NULL::tipo,'cod_tipo',monstro2_recebido.tipo);
 	select * into campo_recebido from Buscar(NULL::carta,'nome',campo);
 	select * into cenario_temp from Buscar(NULL::cenario,'nome',cenario);
 
@@ -191,14 +288,8 @@ begin
 		raise exception 'Cartas de um mesmo jogador não são permitidas para o duelo';
 	end if;
 	
-	if monstro1 = monstro2 then
-		if monstro1 = ilike 'campo' then
-			raise exception 'Não é permitido duelar com duas cartas %',monstro1;
-		end if;
-		
-		if monstro1 = ilike 'magica' then
-			raise exception 'Não é permitido duelar com duas cartas %',monstro1;
-		end if;
+	if monstro1_nome_tipo not ilike 'monstro' or monstro2_nome_tipo not ilike 'monstro' then
+		raise exception 'Só pode duelar com duas cartas monstro';
 	end if;
 	
 	atk_total_monstro1 := monstro1_recebido.atk;

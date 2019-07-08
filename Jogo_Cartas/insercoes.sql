@@ -15,16 +15,24 @@ select inserir('elemento','''eletrico''');
 select inserir('elemento','''e''');
 select inserir('elemento','''ar''');
 
+drop trigger acionar_resticao_carta_monstro on carta;
+ALTER TABLE carta
+DISABLE TRIGGER acionar_restricao_carta_monstro;
 
+select * from information_schema.triggers
 -- Inserindo nivel
 select inserir('nivel','''Iniciante'',''50''');
 select inserir('nivel','''I'',''50''');
 select inserir('nivel','''In'',''-50''');
-
+select * from carta;
+select * from nivel;
+select * from jogador;
 -- Inserindo carta
 select nova_carta('''campo magnetico''','''monstro''',1,'''eletrico''','''Pedro''');
 select nova_carta('''''','''monstro''',1,'''eletrico''','''Pedro''');
 
+select * from nova_carta('''campo eletrico''','''campo''','''eletrico''','''icaro''');
+select * from elemento;
 -- Realizar duelo
 select Duelar(null, null, null, null);
 

@@ -52,6 +52,7 @@ create table duelo(
 	partida int not null,
 	carta int not null,
 	vencedor text not null,
+	atk_restante int not null,
 	primary key(partida, carta),
 	foreign key (partida) references partida(cod_partida),
 	foreign key (carta) references carta(cod_carta)
