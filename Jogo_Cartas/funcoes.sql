@@ -72,6 +72,10 @@ begin
 		pontos_magia is null or jogador_carta is null then
 		raise exception 'Não é permitido valores nulos';
 	end if;
+	
+	if length(trim(both '''' from nome_carta)) < 3 then
+		raise exception 'O nome da carta deve ter pelos menos dois caracteres';
+	end if;
 
 	select * into carta_recebida from Buscar(NULL::carta, 'nome', nome_carta);
 	select cod_tipo into cod_tipo_temp from Buscar(NULL::tipo, 'nome', tipo_carta);
@@ -119,6 +123,10 @@ begin
 	if nome_carta is null or tipo_carta is null or
 		elemento_carta is null or jogador_carta is null then
 		raise exception 'Não é permitido valores nulos';
+	end if;
+	
+	if length(trim(both '''' from nome_carta)) < 3 then
+		raise exception 'O nome da carta deve ter pelos menos dois caracteres';
 	end if;
 	
 	select * into carta_recebida from Buscar(NULL::carta, 'nome', nome_carta);
@@ -266,9 +274,9 @@ begin
 	select * into monstro1_recebido from Buscar(NULL::carta,'nome',monstro1);
 	select * into monstro2_recebido from Buscar(NULL::carta,'nome',monstro2);
 	select * into campo_recebido from Buscar(NULL::carta,'nome',campo);
-	select nome into monstro1_nome_tipo from Buscar(NULL::tipo,'cod_tipo',monstro1_recebido.tipo);
-	select nome into monstro2_nome_tipo from Buscar(NULL::tipo,'cod_tipo',monstro2_recebido.tipo);
-	select nome into campo_nome_tipo from Buscar(NULL::tipo,'cod_tipo',campo_recebido.tipo);
+	select nome into monstro1_nome_tipo from Buscar(NULL::tipo,'cod_tipo',''||monstro1_recebido.tipo||'');
+	select nome into monstro2_nome_tipo from Buscar(NULL::tipo,'cod_tipo',''||monstro2_recebido.tipo||'');
+	select nome into campo_nome_tipo from Buscar(NULL::tipo,'cod_tipo',''||campo_recebido.tipo||'');
 	
 	select * into cenario_temp from Buscar(NULL::cenario,'nome',cenario);
 
@@ -281,7 +289,7 @@ begin
 	end if;
 	
 	if campo_recebido.cod_carta is null then
-		raise exception 'Carta campo invalida', campo;
+		raise exception 'Carta % invalida', campo;
 	end if;
 	
 	if cenario_temp.cod_cenario is null then
@@ -297,7 +305,7 @@ begin
 	end if;
 	
 	if campo_nome_tipo not ilike 'campo' then
-		return raise exception 'Carta passada deve ser do tipo campo';
+		raise exception 'Carta passada deve ser do tipo campo';
 	end if;
 	
 	atk_total_monstro1 := monstro1_recebido.atk;
@@ -326,7 +334,7 @@ begin
 	
 	if verifica_elemento(monstro1_recebido_elemento.nome, monstro2_recebido_elemento.nome) = true then 
 		atk_total_monstro2 := atk_total_monstro2 - monstro2_recebido.nivel * 10;
-	elsif veririca_elemento(monstro1_recebido_elemento.nome, monstro2_recebido_elemento.nome) = false then
+	elsif verifica_elemento(monstro1_recebido_elemento.nome, monstro2_recebido_elemento.nome) = false then
 		atk_total_monstro1 := atk_total_monstro1 - monstro1_recebido.nivel * 10;
 	end if;
 	
@@ -337,6 +345,14 @@ begin
 		
 	if verifica_elemento(campo_recebido_elemento.nome, monstro2_recebido_elemento.nome) = true then
 		atk_total_monstro2 := atk_total_monstro2 -  monstro2_recebido.nivel * 10;
+	end if;
+	
+	if atk_total_monstro1 < 0 then
+		atk_total_monstro1 := 0;
+	end if;
+	
+	if atk_total_monstro2 < 0 then
+		atk_total_monstro1 := 0;
 	end if;
 	
 	if (atk_total_monstro1 > atk_total_monstro2) then
@@ -417,7 +433,7 @@ begin
 	
 	select valor into valor_prox_nivel from nivel where cod_nivel =(carta_recebida.nivel + 1);
 	
-	if carta_recebida.atk = valor_prox_nivel then
+	if carta_recebida.atk >= valor_prox_nivel then
 		update carta set nivel = carta_recebida.nivel + 1 where cod_carta = carta_recebida.cod_carta;
 	end if;
 	

@@ -29,7 +29,7 @@ create table partida(
 	cod_partida serial primary key not null,
 	hora_data timestamp not null,
 	cenario int not null,
-	quant_cartas int not null;
+	quant_cartas int not null,
 	foreign key (cenario) references cenario(cod_cenario)
 );
 
