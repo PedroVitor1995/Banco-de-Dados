@@ -241,6 +241,7 @@ monstro2_recebido carta%rowtype;
 campo_recebido carta%rowtype;
 monstro1_nome_tipo varchar;
 monstro2_nome_tipo varchar;
+campo_nome_tipo varchar;
 monstro1_recebido_elemento elemento%rowtype;
 monstro2_recebido_elemento elemento%rowtype;
 campo_recebido_elemento elemento%rowtype;
@@ -251,6 +252,7 @@ cod_carta_vencedora int;
 nivel_carta_vencedora int;
 jogador_carta_vecedora int;
 cod_part int;
+quant_cartas int := 0;
 teste int;
 atk_total_monstro1 real;
 atk_total_monstro2 real;
@@ -263,9 +265,11 @@ begin
 	
 	select * into monstro1_recebido from Buscar(NULL::carta,'nome',monstro1);
 	select * into monstro2_recebido from Buscar(NULL::carta,'nome',monstro2);
+	select * into campo_recebido from Buscar(NULL::carta,'nome',campo);
 	select nome into monstro1_nome_tipo from Buscar(NULL::tipo,'cod_tipo',monstro1_recebido.tipo);
 	select nome into monstro2_nome_tipo from Buscar(NULL::tipo,'cod_tipo',monstro2_recebido.tipo);
-	select * into campo_recebido from Buscar(NULL::carta,'nome',campo);
+	select nome into campo_nome_tipo from Buscar(NULL::tipo,'cod_tipo',campo_recebido.tipo);
+	
 	select * into cenario_temp from Buscar(NULL::cenario,'nome',cenario);
 
 	if monstro1_recebido.cod_carta is null then
@@ -277,7 +281,7 @@ begin
 	end if;
 	
 	if campo_recebido.cod_carta is null then
-		raise exception 'Carta campo invalida';
+		raise exception 'Carta campo invalida', campo;
 	end if;
 	
 	if cenario_temp.cod_cenario is null then
@@ -292,18 +296,24 @@ begin
 		raise exception 'Só pode duelar com duas cartas monstro';
 	end if;
 	
+	if campo_nome_tipo not ilike 'campo' then
+		return raise exception 'Carta passada deve ser do tipo campo';
+	end if;
+	
 	atk_total_monstro1 := monstro1_recebido.atk;
 	atk_total_monstro2 := monstro2_recebido.atk;
 	
 	if monstro1_recebido.equipamento is not null then 
 		select * into monstro1_recebido_equipamento from Buscar(NULL::carta,'cod_carta',''||monstro1_recebido.equipamento||'');
-		atk_total_monstro1 :=  atk_total_monstro1 + monstro1_recebido_equipamento.pontos_magia; 
+		atk_total_monstro1 :=  atk_total_monstro1 + monstro1_recebido_equipamento.pontos_magia;
+		quant_cartas := quant_cartas + 1;
 		update carta set equipamento = null where cod_carta = monstro1_recebido.cod_carta;
 	end if;
 	
 	if monstro2_recebido.equipamento is not null then 
 		select * into monstro2_recebido_equipamento from Buscar(NULL::carta,'cod_carta',''||monstro2_recebido.equipamento||'');
-		atk_total_monstro2 := atk_total_monstro2 + monstro2_recebido_equipamento.pontos_magia; 
+		atk_total_monstro2 := atk_total_monstro2 + monstro2_recebido_equipamento.pontos_magia;
+		quant_cartas := quant_cartas + 1;
 		update carta set equipamento = null where cod_carta = monstro2_recebido.cod_carta;
 	end if;
 	
@@ -316,8 +326,7 @@ begin
 	
 	if verifica_elemento(monstro1_recebido_elemento.nome, monstro2_recebido_elemento.nome) = true then 
 		atk_total_monstro2 := atk_total_monstro2 - monstro2_recebido.nivel * 10;
-	
-	else
+	elsif veririca_elemento(monstro1_recebido_elemento.nome, monstro2_recebido_elemento.nome) = false then
 		atk_total_monstro1 := atk_total_monstro1 - monstro1_recebido.nivel * 10;
 	end if;
 	
@@ -335,14 +344,16 @@ begin
 		cod_carta_vencedora := monstro1_recebido.cod_carta;
 		nivel_carta_vencedora := monstro1_recebido.nivel;
 		jogador_carta_vecedora := monstro1_recebido.jogador;
-	else
+	elsif (atk_total_monstro1 < atk_total_monstro2) then
 		vencedor := monstro2_recebido.nome;
 		cod_carta_vencedora := monstro2_recebido.cod_carta;
 		nivel_carta_vencedora := monstro2_recebido.nivel;
 		jogador_carta_vecedora := monstro2_recebido.jogador;
+	else
+		vencedor := 'empate';
 	end if;
 
-	perform(select inserir('partida','''now()'','||cenario_temp.cod_cenario||''));
+	perform(select inserir('partida','''now()'','||cenario_temp.cod_cenario||','||quant_cartas||''));
 	select max(cod_partida) into cod_part from partida;
 	perform(select inserir('duelo',''''||cod_part||''','''||monstro1_recebido.cod_carta||''',
 						   '''||vencedor||''','''||atk_total_monstro1||''''));
@@ -351,9 +362,11 @@ begin
 	perform (select inserir('duelo',''''||cod_part||''','''||campo_recebido.cod_carta||''',
 							'''||vencedor||''',''0'''));
 	
-	update carta set atk = atk + (6 - nivel_carta_vencedora) where cod_carta = cod_carta_vencedora;
-	update jogador set pontos = pontos + 3 where cod_jogador = jogador_carta_vecedora;
-	perform verifica_nivel(cod_carta_vencedora);
+	if(vencedor not ilike 'empate')then
+		update carta set atk = atk + (6 - nivel_carta_vencedora) where cod_carta = cod_carta_vencedora;
+		update jogador set pontos = pontos + 3 where cod_jogador = jogador_carta_vecedora;
+		perform verifica_nivel(cod_carta_vencedora);
+	end if;
 	
 	return vencedor;
 end;

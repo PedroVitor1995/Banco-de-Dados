@@ -25,6 +25,8 @@ select inserir('nivel','''Iniciante'',''50''');
 select inserir('nivel','''I'',''50''');
 select inserir('nivel','''In'',''-50''');
 select * from carta;
+select * from partida;
+select * from duelo;
 select * from nivel;
 select * from jogador;
 -- Inserindo carta
